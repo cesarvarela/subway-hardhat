@@ -3,9 +3,14 @@ pragma solidity >=0.8.0;
 
 import "./lib/test.sol";
 
-import "../interface/IWETH.sol";
-import "../interface/IERC20.sol";
-import "../interface/IUniswapV2.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
+
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol"
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol"
+
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol"
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"
 
 import "../Sandwich.sol";
 
