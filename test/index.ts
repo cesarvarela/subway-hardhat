@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ERC20, WETH9, IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router02 } from "../typechain";
+import { ERC20, WETH9, IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router02, Sandwich } from "../typechain";
 import addresses from "../src/addresses";
 import { abi as WETH9_ABI } from "@uniswap/v2-periphery/build/WETH9.json";
 import { abi as ERC20_ABI } from "@openzeppelin/contracts/build/contracts/ERC20.json";
@@ -16,8 +16,21 @@ describe("Sandwich", function () {
   let wethUsdcPair: IUniswapV2Pair;
   let univ2Router: IUniswapV2Router02;
   let univ2Factory: IUniswapV2Factory;
+  let sandwich: Sandwich;
+
+  async function getSandwichPayload() {
+    const wethAddress = weth.address;
+    const path = [weth.address, usdc.address];
+    const amountIn = ethers.utils.parseEther("1.0");
+    const amountOut = (await univ2Router.getAmountsOut(amountIn, path))[1];
+    const tokenOutNo = usdc.address < weth.address ? 0 : 1;
+
+    return ethers.utils.solidityPack(["bytes20", "bytes20[]", "uint128", "uint128", "uint8"], [wethAddress, path, amountIn, amountOut, tokenOutNo]);
+  }
 
   beforeEach(async () => {
+    [owner] = await ethers.getSigners();
+
     weth = (await ethers.getContractAt(WETH9_ABI, addresses.WETH)) as WETH9;
 
     await weth.deposit({ value: ethers.utils.parseEther("1.0") });
@@ -32,10 +45,10 @@ describe("Sandwich", function () {
 
     univ2Router = (await ethers.getContractAt(UNISWAPV2_ROUTER02_ABI, addresses.UNISWAPV2_ROUTER02)) as IUniswapV2Router02;
 
-    [owner] = await ethers.getSigners();
+    sandwich = await (await ethers.getContractFactory("Sandwich")).deploy(owner.address);
   });
 
-  it("test_sandwich_frontslice_router", async () => {
+  it("Should use 125389 gas", async () => {
     await weth.approve(univ2Router.address, ethers.constants.MaxUint256);
 
     const path = [weth.address, usdc.address];
@@ -47,5 +60,17 @@ describe("Sandwich", function () {
     const receipt = await tx.wait();
 
     expect(receipt.gasUsed).to.eq(125389);
+  });
+
+  it("Should use 40387 gas", async () => {
+    await weth.transfer(sandwich.address, ethers.utils.parseEther("1.0"));
+
+    const data = await getSandwichPayload();
+
+    const tx = await owner.sendTransaction({ to: sandwich.address, data });
+
+    const receipt = await tx.wait();
+
+    expect(receipt.gasUsed).to.eq(40387); // whatever the hell happens in that contract takes 3 times less gas 😱
   });
 });
