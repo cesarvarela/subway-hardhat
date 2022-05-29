@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ERC20, WETH9, IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router02, Sandwich } from "../typechain";
+import { ERC20, WETH9, IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router02 } from "../typechain";
 import addresses from "../src/addresses";
 import { abi as WETH9_ABI } from "@uniswap/v2-periphery/build/WETH9.json";
 import { abi as ERC20_ABI } from "@openzeppelin/contracts/build/contracts/ERC20.json";
@@ -16,7 +16,6 @@ describe("Sandwich", function () {
   let wethUsdcPair: IUniswapV2Pair;
   let univ2Router: IUniswapV2Router02;
   let univ2Factory: IUniswapV2Factory;
-  let sandwich: Sandwich;
 
   async function getSandwichPayload() {
     const wethAddress = weth.address;
@@ -26,6 +25,10 @@ describe("Sandwich", function () {
     const tokenOutNo = usdc.address < weth.address ? 0 : 1;
 
     return ethers.utils.solidityPack(["bytes20", "bytes20[]", "uint128", "uint128", "uint8"], [wethAddress, path, amountIn, amountOut, tokenOutNo]);
+  }
+
+  async function deploySandwich(address: string) {
+    return await (await ethers.getContractFactory("Sandwich")).deploy(address);
   }
 
   beforeEach(async () => {
@@ -44,8 +47,6 @@ describe("Sandwich", function () {
     wethUsdcPair = (await ethers.getContractAt(UNISWAPV2_PAIR_ABI, address)) as IUniswapV2Pair;
 
     univ2Router = (await ethers.getContractAt(UNISWAPV2_ROUTER02_ABI, addresses.UNISWAPV2_ROUTER02)) as IUniswapV2Router02;
-
-    sandwich = await (await ethers.getContractFactory("Sandwich")).deploy(owner.address);
   });
 
   it("Should use 125389 gas", async () => {
@@ -63,6 +64,8 @@ describe("Sandwich", function () {
   });
 
   it("Should use 40387 gas", async () => {
+    const sandwich = await deploySandwich(owner.address);
+
     await weth.transfer(sandwich.address, ethers.utils.parseEther("1.0"));
 
     const data = await getSandwichPayload();
@@ -73,4 +76,14 @@ describe("Sandwich", function () {
 
     expect(receipt.gasUsed).to.eq(40387); // whatever the hell happens in that contract takes 3 times less gas 😱
   });
+
+  it("Should revert if not owner ", async () => {
+    const sandwich = await deploySandwich(ethers.constants.AddressZero);
+
+    const data = await getSandwichPayload();
+
+    await expect(owner.sendTransaction({ to: sandwich.address, data })).to.be.reverted;
+  });
+
+  //moar tests to come?
 });
