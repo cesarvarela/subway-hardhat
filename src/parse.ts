@@ -1,15 +1,12 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
 import abiDecoder from "abi-decoder";
-const IUniswapV2RouterABI = require("./abi/IUniswapV2Router02.json");
+import { abi as UNISWAPV2_ROUTER02_ABI } from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 
 // Easily decode UniswapV2 Router data
-abiDecoder.addABI(IUniswapV2RouterABI);
+abiDecoder.addABI(UNISWAPV2_ROUTER02_ABI);
 
 // Only does swapExactETHForTokens
 // You'll need to extend it yourself :P
-export const parseUniv2RouterTx = (txData) => {
+export const parseUniv2RouterTx = (txData: string) => {
   let data = null;
   try {
     data = abiDecoder.decodeMethod(txData);
