@@ -10,13 +10,13 @@ async function main() {
 
   const Sandwich = await ethers.getContractFactory("Sandwich");
 
-  // const gas = await ethers.provider.estimateGas(Sandwich.getDeployTransaction(owner.address));
-
   const sandwich = await Sandwich.deploy(owner.address);
 
-  await sandwich.deployed();
-
   console.log("Sandwich deployed to:", sandwich.address);
+
+  const receipt = await sandwich.deployTransaction.wait();
+
+  console.log(`Tx ${receipt.transactionHash}, gas used: ${receipt.gasUsed}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
