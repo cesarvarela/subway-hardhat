@@ -235,16 +235,8 @@ const sandwichUniswapV2RouterTx = async (txHash: string) => {
 };
 
 const main = async () => {
-  logInfo("============================================================================");
-  logInfo(
-    "          _                       _         _   \r\n  ____  _| |____ __ ____ _ _  _  | |__  ___| |_ \r\n (_-< || | '_ \\ V  V / _` | || | | '_ \\/ _ \\  _|\r\n /__/\\_,_|_.__/\\_/\\_/\\__,_|\\_, | |_.__/\\___/\\__|\r\n | |__ _  _  | (_) |__  ___|__/__ __            \r\n | '_ \\ || | | | | '_ \\/ -_) V / '  \\           \r\n |_.__/\\_, | |_|_|_.__/\\___|\\_/|_|_|_|          \r\n       |__/                                     \n"
-  );
-  logInfo("github: https://github.com/libevm");
-  logInfo("twitter: https://twitter.com/libevm");
-  logInfo("============================================================================\n");
   logInfo(`Searcher Wallet: ${searcherWallet.address}`);
   logInfo(`Node URL: ${wssProvider.connection.url}\n`);
-  logInfo("============================================================================\n");
 
   // Add timestamp to all subsequent console.logs
   // One little two little three little dependency injections....
