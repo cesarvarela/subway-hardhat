@@ -1,21 +1,5 @@
-import { ethers } from "hardhat";
-import { logError } from "./logging";
+import hre from "hardhat";
 import { abi as UNISWAPV2_PAIR_ABI } from "@uniswap/v2-core/build/UniswapV2Pair.json";
-
-let hasEnv = true;
-
-const ENV_VARS = ["RPC_URL", "RPC_URL_WSS", "PRIVATE_KEY", "FLASHBOTS_AUTH_KEY", "SANDWICH_CONTRACT"];
-
-for (let i = 0; i < ENV_VARS.length; i++) {
-  if (!process.env[ENV_VARS[i]]) {
-    logError(`Missing env var ${ENV_VARS[i]}`);
-    hasEnv = false;
-  }
-}
-
-if (!hasEnv) {
-  process.exit(1);
-}
 
 // Contracts
 export const CONTRACTS = {
@@ -32,14 +16,14 @@ export const TOKENS = {
 };
 
 // Providers
-export const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-export const wssProvider = new ethers.providers.WebSocketProvider(process.env.RPC_URL_WSS!);
+export const provider = hre.ethers.getDefaultProvider();
+export const wssProvider = new hre.ethers.providers.WebSocketProvider(process.env.GOERLI_WSS!);
 
 // Used to send transactions, needs ether
-export const searcherWallet = new ethers.Wallet(process.env.PRIVATE_KEY!, wssProvider);
+export const searcherWallet = new hre.ethers.Wallet(process.env.GOERLI_PRIVATE_KEY!, wssProvider);
 
 // Used to sign flashbots headers doesn't need any ether
-export const authKeyWallet = new ethers.Wallet(process.env.PRIVATE_KEY!, wssProvider);
+export const authKeyWallet = new hre.ethers.Wallet(process.env.GOERLI_PRIVATE_KEY!, wssProvider);
 
 // Common contracts
-export const uniswapV2Pair = new ethers.Contract(ethers.constants.AddressZero, UNISWAPV2_PAIR_ABI, searcherWallet);
+export const uniswapV2Pair = new hre.ethers.Contract(hre.ethers.constants.AddressZero, UNISWAPV2_PAIR_ABI, searcherWallet);

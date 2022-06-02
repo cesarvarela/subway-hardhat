@@ -122,7 +122,13 @@ const sandwichUniswapV2RouterTx = async (txHash: string) => {
   // Craft our payload
   const frontslicePayload = ethers.utils.solidityPack(
     ["address", "address", "uint128", "uint128", "uint8"],
-    [token, pairToSandwich, optimalWethIn, sandwichStates.frontrun.amountOut, ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1]
+    [
+      token,
+      pairToSandwich,
+      optimalWethIn,
+      sandwichStates.frontrun.amountOut,
+      ethers.BigNumber.from(token).lt(ethers.BigNumber.from(weth)) ? 0 : 1,
+    ]
   );
 
   const frontsliceTx = {
@@ -143,7 +149,13 @@ const sandwichUniswapV2RouterTx = async (txHash: string) => {
 
   const backslicePayload = ethers.utils.solidityPack(
     ["address", "address", "uint128", "uint128", "uint8"],
-    [weth, pairToSandwich, sandwichStates.frontrun.amountOut, sandwichStates.backrun.amountOut, ethers.BigNumber.from(weth).lt(ethers.BigNumber.from(token)) ? 0 : 1]
+    [
+      weth,
+      pairToSandwich,
+      sandwichStates.frontrun.amountOut,
+      sandwichStates.backrun.amountOut,
+      ethers.BigNumber.from(weth).lt(ethers.BigNumber.from(token)) ? 0 : 1,
+    ]
   );
 
   const backsliceTx = {
@@ -200,7 +212,10 @@ const sandwichUniswapV2RouterTx = async (txHash: string) => {
 
   // If 99.99% bribe isn't enough to cover base fee, its not worth it
   if (maxPriorityFeePerGas.lt(nextBaseFee)) {
-    logTrace(strLogPrefix, `maxPriorityFee (${formatUnits(maxPriorityFeePerGas, 9)}) gwei < nextBaseFee (${formatUnits(nextBaseFee, 9)}) gwei`);
+    logTrace(
+      strLogPrefix,
+      `maxPriorityFee (${formatUnits(maxPriorityFeePerGas, 9)}) gwei < nextBaseFee (${formatUnits(nextBaseFee, 9)}) gwei`
+    );
     return;
   }
 
@@ -212,7 +227,11 @@ const sandwichUniswapV2RouterTx = async (txHash: string) => {
 
   // Fire the bundles
   const bundleResp = await sendBundleFlashbots([frontsliceTxSigned, middleTx, backsliceTxSignedWithBribe], targetBlockNumber);
-  logSuccess(strLogPrefix, "Bundle submitted!", JSON.stringify({ block, targetBlockNumber, nextBaseFee, nonce, sandwichStates, frontsliceTx, maxPriorityFeePerGas, bundleResp }));
+  logSuccess(
+    strLogPrefix,
+    "Bundle submitted!",
+    JSON.stringify({ block, targetBlockNumber, nextBaseFee, nonce, sandwichStates, frontsliceTx, maxPriorityFeePerGas, bundleResp })
+  );
 };
 
 const main = async () => {

@@ -1,7 +1,8 @@
-import { ethers } from "ethers";
-
+import { BigNumber } from "ethers";
+import { ethers } from "hardhat";
+import type { Block } from "@ethersproject/abstract-provider";
 // GM I hate JS
-export const match = (a, b, caseIncensitive = true) => {
+export const match = (a: any, b: any, caseIncensitive = true) => {
   if (a === null || a === undefined) return false;
 
   if (Array.isArray(b)) {
@@ -21,18 +22,18 @@ export const match = (a, b, caseIncensitive = true) => {
 
 // JSON.stringify from ethers.BigNumber is pretty horrendous
 // So we have a custom stringify functino
-export const stringifyBN = (o, toHex = false) => {
+export const stringifyBN = (o: any, toHex = false): any => {
   if (o === null || o === undefined) {
     return o;
-  } else if (typeof o == "bigint" || o.eq !== undefined) {
+  } else if (typeof o === "bigint" || o.eq !== undefined) {
     if (toHex) {
       return o.toHexString();
     }
     return o.toString();
   } else if (Array.isArray(o)) {
     return o.map((x) => stringifyBN(x, toHex));
-  } else if (typeof o == "object") {
-    const res = {};
+  } else if (typeof o === "object") {
+    const res: any = {};
     const keys = Object.keys(o);
     keys.forEach((k) => {
       res[k] = stringifyBN(o[k], toHex);
@@ -43,26 +44,24 @@ export const stringifyBN = (o, toHex = false) => {
   }
 };
 
-export const toRpcHexString = (bn) => {
+export const toRpcHexString = (bn: BigNumber) => {
   let val = bn.toHexString();
   val = "0x" + val.replace("0x", "").replace(/^0+/, "");
 
-  if (val == "0x") {
+  if (val === "0x") {
     val = "0x0";
   }
 
   return val;
 };
 
-export const calcNextBlockBaseFee = (curBlock) => {
+export const calcNextBlockBaseFee = (curBlock: Block) => {
   const baseFee = curBlock.baseFeePerGas;
   const gasUsed = curBlock.gasUsed;
   const targetGasUsed = curBlock.gasLimit.div(2);
   const delta = gasUsed.sub(targetGasUsed);
 
-  const newBaseFee = baseFee.add(
-    baseFee.mul(delta).div(targetGasUsed).div(ethers.BigNumber.from(8))
-  );
+  const newBaseFee = baseFee!.add(baseFee!.mul(delta).div(targetGasUsed).div(ethers.BigNumber.from(8)));
 
   // Add 0-9 wei so it becomes a different hash each time
   const rand = Math.floor(Math.random() * 10);

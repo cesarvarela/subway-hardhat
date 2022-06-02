@@ -1,6 +1,6 @@
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { parseUnits } from "@ethersproject/units";
-import { getUniv2DataGivenIn } from "./univ2.js";
+import { getUniv2DataGivenIn } from "./univ2";
 
 const BN_18 = parseUnits("1");
 
@@ -10,12 +10,12 @@ const BN_18 = parseUnits("1");
   Using binary search here as the profit function isn't normally distributed
 */
 export const binarySearch = (
-  left, // Lower bound
-  right, // Upper bound
-  calculateF, // Generic calculate function
-  passConditionF, // Condition checker
+  left: BigNumber, // Lower bound
+  right: BigNumber, // Upper bound
+  calculateF: (a: BigNumber) => BigNumber, // Generic calculate function
+  passConditionF: (a: BigNumber) => boolean, // Condition checker
   tolerance = parseUnits("0.01") // Tolerable delta (in %, in 18 dec, i.e. parseUnits('0.01') means left and right delta can be 1%)
-) => {
+): BigNumber => {
   if (right.sub(left).gt(tolerance.mul(right.add(left).div(2)).div(BN_18))) {
     const mid = right.add(left).div(2);
     const out = calculateF(mid);
@@ -44,10 +44,10 @@ export const binarySearch = (
 */
 
 export const calcSandwichOptimalIn = (
-  userAmountIn,
-  userMinRecvToken,
-  reserveWeth,
-  reserveToken
+  userAmountIn: BigNumber,
+  userMinRecvToken: BigNumber,
+  reserveWeth: BigNumber,
+  reserveToken: BigNumber
 ) => {
   // Note that user is going from WETH -> TOKEN
   // So, we'll be pushing the price of TOKEn
@@ -56,23 +56,15 @@ export const calcSandwichOptimalIn = (
   // 1. (Ours) WETH -> TOKEN (pushes up price)
   // 2. (Victim) WETH -> TOKEN (pushes up price more)
   // 3. (Ours) TOKEN -> WETH (sells TOKEN for slight WETH profit)
-  const calcF = (amountIn) => {
-    const frontrunState = getUniv2DataGivenIn(
-      amountIn,
-      reserveWeth,
-      reserveToken
-    );
-    const victimState = getUniv2DataGivenIn(
-      userAmountIn,
-      frontrunState.newReserveA,
-      frontrunState.newReserveB
-    );
+  const calcF = (amountIn: BigNumber): BigNumber => {
+    const frontrunState = getUniv2DataGivenIn(amountIn, reserveWeth, reserveToken);
+    const victimState = getUniv2DataGivenIn(userAmountIn, frontrunState.newReserveA, frontrunState.newReserveB);
     return victimState.amountOut;
   };
 
   // Our binary search must pass this function
   // i.e. User must receive at least min this
-  const passF = (amountOut) => amountOut.gte(userMinRecvToken);
+  const passF = (amountOut: BigNumber) => amountOut.gte(userMinRecvToken);
 
   // Lower bound will be 0
   // Upper bound will be 100 ETH (hardcoded, or however much ETH you have on hand)
@@ -89,27 +81,15 @@ export const calcSandwichOptimalIn = (
 };
 
 export const calcSandwichState = (
-  optimalSandwichWethIn,
-  userWethIn,
-  userMinRecv,
-  reserveWeth,
-  reserveToken
+  optimalSandwichWethIn: BigNumber,
+  userWethIn: BigNumber,
+  userMinRecv: BigNumber,
+  reserveWeth: BigNumber,
+  reserveToken: BigNumber
 ) => {
-  const frontrunState = getUniv2DataGivenIn(
-    optimalSandwichWethIn,
-    reserveWeth,
-    reserveToken
-  );
-  const victimState = getUniv2DataGivenIn(
-    userWethIn,
-    frontrunState.newReserveA,
-    frontrunState.newReserveB
-  );
-  const backrunState = getUniv2DataGivenIn(
-    frontrunState.amountOut,
-    victimState.newReserveB,
-    victimState.newReserveA
-  );
+  const frontrunState = getUniv2DataGivenIn(optimalSandwichWethIn, reserveWeth, reserveToken);
+  const victimState = getUniv2DataGivenIn(userWethIn, frontrunState.newReserveA, frontrunState.newReserveB);
+  const backrunState = getUniv2DataGivenIn(frontrunState.amountOut, victimState.newReserveB, victimState.newReserveA);
 
   // Sanity check
   if (victimState.amountOut.lt(userMinRecv)) {

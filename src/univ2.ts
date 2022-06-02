@@ -1,11 +1,11 @@
-import { ethers } from "ethers";
-import { uniswapV2Pair } from "./constants.js";
-import { match } from "./utils.js";
+import { BigNumber, ethers } from "ethers";
+import { uniswapV2Pair } from "./constants";
+import { match } from "./utils";
 
 /* 
   Sorts tokens
 */
-export const sortTokens = (tokenA, tokenB) => {
+export const sortTokens = (tokenA: string, tokenB: string) => {
   if (ethers.BigNumber.from(tokenA).lt(ethers.BigNumber.from(tokenB))) {
     return [tokenA, tokenB];
   }
@@ -15,7 +15,7 @@ export const sortTokens = (tokenA, tokenB) => {
 /*
   Computes pair addresses off-chain
 */
-export const getUniv2PairAddress = (tokenA, tokenB) => {
+export const getUniv2PairAddress = (tokenA: string, tokenB: string) => {
   const [token0, token1] = sortTokens(tokenA, tokenB);
 
   const salt = ethers.utils.keccak256(token0 + token1.replace("0x", ""));
@@ -31,7 +31,7 @@ export const getUniv2PairAddress = (tokenA, tokenB) => {
 /*
   Get reserve helper function
 */
-export const getUniv2Reserve = async (pair, tokenA, tokenB) => {
+export const getUniv2Reserve = async (pair: string, tokenA: string, tokenB: string) => {
   const [token0] = sortTokens(tokenA, tokenB);
   const [reserve0, reserve1] = await uniswapV2Pair.attach(pair).getReserves();
 
@@ -46,7 +46,7 @@ export const getUniv2Reserve = async (pair, tokenA, tokenB) => {
 
  How much out do we get if we supply in?
 */
-export const getUniv2DataGivenIn = (aIn, reserveA, reserveB) => {
+export const getUniv2DataGivenIn = (aIn: BigNumber, reserveA: BigNumber, reserveB: BigNumber) => {
   const aInWithFee = aIn.mul(997);
   const numerator = aInWithFee.mul(reserveB);
   const denominator = aInWithFee.add(reserveA.mul(1000));
@@ -76,7 +76,7 @@ export const getUniv2DataGivenIn = (aIn, reserveA, reserveB) => {
 
  How much in do we get if we supply out?
 */
-export const getUniv2DataGivenOut = (bOut, reserveA, reserveB) => {
+export const getUniv2DataGivenOut = (bOut: BigNumber, reserveA: BigNumber, reserveB: BigNumber) => {
   // Underflow
   let newReserveB = reserveB.sub(bOut);
   if (newReserveB.lt(0) || reserveB.gt(reserveB)) {
@@ -110,7 +110,7 @@ export const getUniv2DataGivenOut = (bOut, reserveA, reserveB) => {
   We do this as Univ2 router swaps can swap over "paths". In this example, we're only doing
   WETH <> TOKEN sandwiches. Thus, we only care about the minRecv for the path DIRECTLY AFTER WETH
 */
-export const getUniv2ExactWethTokenMinRecv = async (finalMinRecv, path) => {
+export const getUniv2ExactWethTokenMinRecv = async (finalMinRecv: BigNumber, path: string[]) => {
   let userMinRecv = finalMinRecv;
 
   // Only works for swapExactETHForTokens
@@ -121,17 +121,9 @@ export const getUniv2ExactWethTokenMinRecv = async (finalMinRecv, path) => {
     const toToken = path[i];
 
     const pair = getUniv2PairAddress(fromToken, toToken);
-    const [reserveFrom, reserveTo] = await getUniv2Reserve(
-      pair,
-      fromToken,
-      toToken
-    );
+    const [reserveFrom, reserveTo] = await getUniv2Reserve(pair, fromToken, toToken);
 
-    const newReserveData = await getUniv2DataGivenOut(
-      userMinRecv,
-      reserveFrom,
-      reserveTo
-    );
+    const newReserveData = await getUniv2DataGivenOut(userMinRecv, reserveFrom, reserveTo);
     userMinRecv = newReserveData.amountIn;
   }
 

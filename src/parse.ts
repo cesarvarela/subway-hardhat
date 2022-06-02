@@ -18,7 +18,7 @@ export const parseUniv2RouterTx = (txData: string) => {
     return null;
   }
 
-  const [amountOutMin, path, to, deadline] = data.params.map((x) => x.value);
+  const [amountOutMin, path, to, deadline] = data.params.map((x: any) => x.value);
 
   return {
     amountOutMin,
